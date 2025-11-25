@@ -29,10 +29,11 @@ minimum-version = "0.4"
 build-dir = "build/{wheel_tag}"
 wheel.py-api = "cp312"
 wheel.packages = ["src/vamp"]
+wheel.install-dir = "vamp"
 
 cmake.build-type = "Release"
 
 [tool.scikit-build.cmake.define]
 VAMP_LTO = "OFF"
-VAMP_ROBOT_MODULES="sphere;ur5;panda;fetch;baxter"
-VAMP_ROBOT_STRUCTS="Sphere;UR5;Panda;Fetch;Baxter"
+VAMP_ROBOT_MODULES="sphere;ur5;panda;fetch;baxter;bimanualpanda70180"
+VAMP_ROBOT_STRUCTS="Sphere;UR5;Panda;Fetch;Baxter;BimanualPanda70180"

@@ -276,9 +276,12 @@ namespace vamp::binding
                 path, EnvironmentVector(environment), settings, rng);
         }
 
-        inline static auto eefk(const Type &start) -> Eigen::Matrix4f
+        inline static auto eefk(const Type &start) -> std::vector<Eigen::Matrix4f>
         {
-            return Robot::eefk(Input::array(start)).matrix();
+            std::vector<Eigen::Matrix4f> eefk_m;
+            for(const auto &fk : Robot::eefk(Input::array(start)))
+                eefk_m.push_back(fk.matrix());
+            return eefk_m;
         }
 
         inline static auto filter_self_from_pointcloud(
@@ -355,7 +358,7 @@ namespace vamp::binding
             "Minimum and maximum radii sizes of robot spheres.");
         submodule.def(
             "joint_names", []() { return Robot::joint_names; }, "Joint names for the robot in order of DoF");
-        submodule.def("end_effector", []() { return Robot::end_effector; }, "End-effector frame name.");
+        submodule.def("end_effectors", []() { return Robot::end_effectors; }, "End-effector frame names.");
 
         using RNG = vamp::rng::RNG<Robot>;
         nb::class_<typename RNG::Ptr>(submodule, "RNG", "RNG for robot configurations.")

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Semantic Robot Description Format (SRDF) for dual-arm Panda robot.
+  Generated for use with motion planning libraries.
+-->
+<robot name="combined_robot">
+
+    <!-- Collision pairs to disable (adjacent or never-colliding links) -->
+
+    <!-- Panda1 arm - disable collision between link5 and link7 -->
+    <disable_collisions link1="panda1::panda_link5" link2="panda1::panda_link7" reason="Never" />
+
+    <!-- Panda1 arm - disable collision between link6 and link8 -->
+    <disable_collisions link1="panda1::panda_link6" link2="panda1::panda_link8" reason="Never" />
+
+    <!-- Panda2 arm - disable collision between link5 and link7 -->
+    <disable_collisions link1="panda2::panda_link5" link2="panda2::panda_link7" reason="Never" />
+
+    <!-- Panda2 arm - disable collision between link6 and link8 -->
+    <disable_collisions link1="panda2::panda_link6" link2="panda2::panda_link8" reason="Never" />
+
+    <!-- Adjacent link pairs for panda1 -->
+    <disable_collisions link1="panda1::panda_link0" link2="panda1::panda_link1" reason="Adjacent" />
+    <disable_collisions link1="panda1::panda_link1" link2="panda1::panda_link2" reason="Adjacent" />
+    <disable_collisions link1="panda1::panda_link2" link2="panda1::panda_link3" reason="Adjacent" />
+    <disable_collisions link1="panda1::panda_link3" link2="panda1::panda_link4" reason="Adjacent" />
+    <disable_collisions link1="panda1::panda_link4" link2="panda1::panda_link5" reason="Adjacent" />
+    <disable_collisions link1="panda1::panda_link5" link2="panda1::panda_link6" reason="Adjacent" />
+    <disable_collisions link1="panda1::panda_link6" link2="panda1::panda_link7" reason="Adjacent" />
+    <disable_collisions link1="panda1::panda_link7" link2="panda1::panda_link8" reason="Adjacent" />
+    <disable_collisions link1="panda1::panda_link8" link2="panda1::hand_attach" reason="Adjacent" />
+    <disable_collisions link1="panda1::hand_attach" link2="panda_hand1::panda_hand" reason="Adjacent" />
+    <disable_collisions link1="panda_hand1::panda_hand" link2="panda_hand1::panda_leftfinger" reason="Adjacent" />
+    <disable_collisions link1="panda_hand1::panda_hand" link2="panda_hand1::panda_rightfinger" reason="Adjacent" />
+
+    <!-- Adjacent link pairs for panda2 -->
+    <disable_collisions link1="panda2::panda_link0" link2="panda2::panda_link1" reason="Adjacent" />
+    <disable_collisions link1="panda2::panda_link1" link2="panda2::panda_link2" reason="Adjacent" />
+    <disable_collisions link1="panda2::panda_link2" link2="panda2::panda_link3" reason="Adjacent" />
+    <disable_collisions link1="panda2::panda_link3" link2="panda2::panda_link4" reason="Adjacent" />
+    <disable_collisions link1="panda2::panda_link4" link2="panda2::panda_link5" reason="Adjacent" />
+    <disable_collisions link1="panda2::panda_link5" link2="panda2::panda_link6" reason="Adjacent" />
+    <disable_collisions link1="panda2::panda_link6" link2="panda2::panda_link7" reason="Adjacent" />
+    <disable_collisions link1="panda2::panda_link7" link2="panda2::panda_link8" reason="Adjacent" />
+    <disable_collisions link1="panda2::panda_link8" link2="panda2::hand_attach" reason="Adjacent" />
+    <disable_collisions link1="panda2::hand_attach" link2="panda_hand2::panda_hand" reason="Adjacent" />
+    <disable_collisions link1="panda_hand2::panda_hand" link2="panda_hand2::panda_leftfinger" reason="Adjacent" />
+    <disable_collisions link1="panda_hand2::panda_hand" link2="panda_hand2::panda_rightfinger" reason="Adjacent" />
+
+    <!-- Disable collisions between hand links and nearby arm links for panda1 -->
+    <disable_collisions link1="panda1::panda_link7" link2="panda_hand1::panda_hand" reason="Never" />
+    <disable_collisions link1="panda1::panda_link7" link2="panda_hand1::panda_leftfinger" reason="Never" />
+    <disable_collisions link1="panda1::panda_link7" link2="panda_hand1::panda_rightfinger" reason="Never" />
+    <disable_collisions link1="panda1::panda_link8" link2="panda_hand1::panda_leftfinger" reason="Never" />
+    <disable_collisions link1="panda1::panda_link8" link2="panda_hand1::panda_rightfinger" reason="Never" />
+
+    <!-- Disable collisions between hand links and nearby arm links for panda2 -->
+    <disable_collisions link1="panda2::panda_link7" link2="panda_hand2::panda_hand" reason="Never" />
+    <disable_collisions link1="panda2::panda_link7" link2="panda_hand2::panda_leftfinger" reason="Never" />
+    <disable_collisions link1="panda2::panda_link7" link2="panda_hand2::panda_rightfinger" reason="Never" />
+    <disable_collisions link1="panda2::panda_link8" link2="panda_hand2::panda_leftfinger" reason="Never" />
+    <disable_collisions link1="panda2::panda_link8" link2="panda_hand2::panda_rightfinger" reason="Never" />
+
+    <!-- Planning groups -->
+
+    <!-- Panda1 arm group - 7 DOF arm joints -->
+    <group name="panda1_arm">
+        <joint name="panda1::panda_joint1" />
+        <joint name="panda1::panda_joint2" />
+        <joint name="panda1::panda_joint3" />
+        <joint name="panda1::panda_joint4" />
+        <joint name="panda1::panda_joint5" />
+        <joint name="panda1::panda_joint6" />
+        <joint name="panda1::panda_joint7" />
+    </group>
+
+    <!-- Panda2 arm group - 7 DOF arm joints -->
+    <group name="panda2_arm">
+        <joint name="panda2::panda_joint1" />
+        <joint name="panda2::panda_joint2" />
+        <joint name="panda2::panda_joint3" />
+        <joint name="panda2::panda_joint4" />
+        <joint name="panda2::panda_joint5" />
+        <joint name="panda2::panda_joint6" />
+        <joint name="panda2::panda_joint7" />
+    </group>
+
+    <!-- Combined dual-arm group - all 14 DOF -->
+    <group name="dual_arms">
+        <group name="panda1_arm" />
+        <group name="panda2_arm" />
+    </group>
+
+    <!-- End effectors -->
+
+    <!-- Panda1 hand end effector -->
+    <end_effector name="panda1_hand" parent_link="panda1::panda_link8" group="panda1_arm" />
+
+    <!-- Panda2 hand end effector -->
+    <end_effector name="panda2_hand" parent_link="panda2::panda_link8" group="panda2_arm" />
+
+    <!-- Virtual joint connecting robot to world frame -->
+    <virtual_joint name="virtual_joint" type="fixed" parent_frame="world" child_link="world" />
+
+</robot>

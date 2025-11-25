@@ -1,0 +1,1 @@
+include src/vamp/_core/*.pyi
