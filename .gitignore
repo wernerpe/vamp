@@ -20,3 +20,5 @@ venv/
 src/vamp/_core/*.pyi
 /.mypy_cache/
 *venv*
+.vscode*
+.claude*
