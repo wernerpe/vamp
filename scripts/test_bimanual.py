@@ -67,6 +67,10 @@ def main(num_plans=5):
     start = np.array([-1.8721524 , -0.43074113,  0.54297173, -1.6331258 , -0.5162828 ,
         2.7372644 ,  1.4881228 ,  0.10029678,  0.8015321 ,  1.3946488 ,
        -1.688786  , -0.51211363,  3.359184  ,  0.49604094], dtype=np.float32)
+    
+    start_segfault = np.array([-1.76001307,  0.65496548,  1.56808963, -1.72458956, -2.24366457,
+        1.66725215,  2.48020473,  2.59006965, -0.77688433, -1.60382714,
+       -2.39259848,  2.30752985,  2.56855721, -2.48020473], dtype=np.float32)
     if start is None:
         print('Failed to find valid start!')
         return
@@ -85,12 +89,21 @@ def main(num_plans=5):
         goal = np.array([ 0.33895347,  1.5497141 , -1.1819217 , -2.1733024 ,  1.0289133 ,
         3.580486  ,  1.4881228 ,  2.6405675 , -0.42822266, -1.181161  ,
        -1.470809  ,  0.23552905,  2.8322597 ,  0.16534698], dtype=np.float32)
+        
+        goal_segfault = np.array([-1.76350217, -0.2741152 ,  0.27893605, -1.59718334, -0.30652312,
+        2.88686604,  1.15742887,  0.45545234,  1.46214723,  1.34557365,
+       -1.27495863, -0.76661815,  3.3655516 ,  0.16534698], dtype=np.float32)
+
         if goal is None:
             print(f'Motion {plan_num+1}: Failed to find valid goal, skipping')
             continue
-
+        assert robot.validate(start_segfault)
+        assert robot.validate(goal_segfault)
+        assert robot.validate(start)
+        assert robot.validate(goal)
+        
         # Plan
-        result = robot.aorrtc(start, goal, env, settings, rng)
+        result = robot.aorrtc(start_segfault, goal_segfault, env, settings, rng)
 
         if result.solved:
             # Simplify
