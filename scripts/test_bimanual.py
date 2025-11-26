@@ -68,8 +68,8 @@ def main(num_plans=5):
     sim.add_environment_from_problem_dict(problem_dict, ignore_names = ignore_names)
     env = vamp.problem_dict_to_vamp(problem_dict, ignore_names = ignore_names)
     settings = vamp.RRTCSettings()
-    settings.max_iterations = 1000000  # Increased from 100k for 14-DOF system
-    settings.max_samples = 10000000     # Increased from 100k for better exploration
+    settings.max_iterations = 400000  # Increased from 100k for 14-DOF system
+    settings.max_samples = 100000     # Increased from 100k for better exploration
     settings.radius = 15.0              # Increased from 4.0 for larger connection radius
     settings.range = 5.0                # Increased from 2.0 for larger step size
     settings.alpha = 0.01                # Higher alpha for more goal-biased search
@@ -78,8 +78,12 @@ def main(num_plans=5):
     settings.min_radius = 0.1           # Lower minimum radius to allow tighter connections
     settings.tree_ratio = 0.5           # Balance between start and goal trees
     settings.start_tree_first = True    # Start from start tree
+    aorrtc_settings = vamp.AORRTCSettings()
+    aorrtc_settings.rrtc = settings
+    aorrtc_settings.max_samples = settings.max_samples
+    aorrtc_settings.max_iterations = settings.max_iterations
     simp_settings = vamp.SimplifySettings()
-
+    aorrtc_settings.simplify = simp_settings
     # Sample initial start
     print('\nSampling initial configuration...')
     #start = sample_valid(robot, rng)
@@ -124,7 +128,10 @@ def main(num_plans=5):
         
         # Plan
         result = robot.rrtc(start_segfault, goal_segfault, env, settings, rng)
-
+        print("rrtc done")
+        #attemping to run aorrtc
+        result_aorrtc = robot.aorrtc(start_segfault, goal_segfault, env, aorrtc_settings, rng)
+        print("result_aorrtc done")
         if result.solved:
             # Simplify
             simplified = robot.simplify(result.path, env, simp_settings, rng)
