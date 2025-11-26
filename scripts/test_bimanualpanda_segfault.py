@@ -29,8 +29,11 @@ goal:  [-1.76350217, -0.2741152 ,  0.27893605, -1.59718334, -0.30652312,
 """
 
 import vamp
+from vamp import pybullet_interface as vpb
 import numpy as np
 import sys
+import time
+from pathlib import Path
 from fire import Fire
 
 
@@ -230,16 +233,191 @@ def test_aorrtc_with_random_configs():
         return False
 
 
+def visualize_collision_spheres(sim, robot, config):
+    """Draw collision spheres in PyBullet."""
+    spheres = robot.fk(config)
+    sphere_ids = []
+
+    for i, sphere in enumerate(spheres):
+        # Color spheres by arm (first half vs second half)
+        if i < robot.n_spheres() // 2:
+            color = [0.2, 0.6, 1.0, 0.3]  # Blue for arm 1
+        else:
+            color = [1.0, 0.4, 0.2, 0.3]  # Orange for arm 2
+
+        sphere_id = sim.add_sphere(
+            radius=sphere.r,
+            position=[sphere.x, sphere.y, sphere.z],
+            color=color
+        )
+        sphere_ids.append(sphere_id)
+
+    return sphere_ids
+
+
+def update_collision_spheres(sim, robot, config, sphere_ids):
+    """Update positions of collision sphere visualizations."""
+    spheres = robot.fk(config)
+    for sphere_id, sphere in zip(sphere_ids, spheres):
+        sim.update_object_position(sphere_id, [sphere.x, sphere.y, sphere.z])
+
+
+def test_rrtc_with_random_configs_and_playback(num_plans=3):
+    """Test 7: RRTC with random configs and PyBullet playback visualization."""
+    print("\n" + "="*70)
+    print("TEST 7: RRTC Planner with Random Configs and Playback")
+    print("="*70)
+
+    robot = vamp.bimanualpanda70180
+    print(f'Robot: bimanualpanda70180, {robot.dimension()} DOF, {robot.n_spheres()} spheres')
+
+    # Find URDF path
+    urdf_path = Path(__file__).parent.parent / 'resources' / 'bimanualpanda70180' / 'bimanualpanda70180_spherized.urdf'
+    if not urdf_path.exists():
+        print(f"  ⚠️  URDF not found at {urdf_path}, skipping visualization")
+        return False
+
+    # Create PyBullet simulator
+    print('\nInitializing PyBullet...')
+    sim = None
+    try:
+        import os
+        # Check if we have a display
+        if 'DISPLAY' not in os.environ:
+            print('  ⚠️  No DISPLAY environment variable, skipping PyBullet visualization')
+        else:
+            sim = vpb.PyBulletSimulator(
+                str(urdf_path),
+                robot.joint_names(),
+                visualize=True
+            )
+            print('  ✅ PyBullet initialized')
+    except Exception as e:
+        print(f'  ⚠️  Could not initialize PyBullet: {e}')
+        print('  Continuing without visualization...')
+        sim = None
+
+    # Setup planning
+    sampler = robot.halton()
+    env = vamp.Environment()
+    settings = vamp.RRTCSettings()
+    simp_settings = vamp.SimplifySettings()
+
+    # Find initial start
+    print('\nFinding initial valid configuration...')
+    start = None
+    for _ in range(1000):
+        config = sampler.next()
+        if robot.validate(config):
+            start = config
+            break
+
+    if start is None:
+        print('  ❌ Could not find valid start')
+        return False
+    print(f'  ✅ Found start')
+
+    # Initialize visualization if available
+    sphere_ids = None
+    if sim is not None:
+        sim.set_joint_positions(start.tolist())
+        sphere_ids = visualize_collision_spheres(sim, robot, start)
+        print(f'  ✅ Created {len(sphere_ids)} collision spheres (blue=arm1, orange=arm2)')
+
+    print(f'\nPlanning and visualizing {num_plans} motions...\n')
+    successful_plans = 0
+
+    for plan_num in range(num_plans):
+        # Find valid goal
+        print(f'Motion {plan_num+1}/{num_plans}: Finding goal...')
+        goal = None
+        for _ in range(1000):
+            config = sampler.next()
+            if robot.validate(config):
+                goal = config
+                break
+
+        if goal is None:
+            print(f'  ⚠️  Could not find valid goal, skipping')
+            continue
+
+        # Plan with RRTC
+        print(f'  Planning with RRTC...')
+        sys.stdout.flush()
+        rng = robot.halton()
+
+        try:
+            result = robot.rrtc(start, goal, env, settings, rng)
+
+            if result.solved:
+                # Simplify
+                simplified = robot.simplify(result.path, env, simp_settings, rng)
+
+                print(f'  ✅ Solved!')
+                print(f'     Planning time: {result.nanoseconds/1000:.1f} μs')
+                print(f'     Path: {len(result.path)} -> {len(simplified.path)} waypoints')
+                print(f'     Cost: {result.path.cost():.3f} -> {simplified.path.cost():.3f}')
+
+                # Interpolate and visualize
+                path = simplified.path
+                path.interpolate_to_resolution(robot.resolution())
+                print(f'     Interpolated to {len(path)} waypoints')
+
+                if sim is not None:
+                    print(f'     Playing back motion...')
+                    for waypoint_idx in range(len(path)):
+                        config = path[waypoint_idx]
+                        if isinstance(config, np.ndarray):
+                            config_list = config.tolist()
+                        else:
+                            config_list = config.to_list()
+
+                        sim.set_joint_positions(config_list)
+                        if sphere_ids is not None:
+                            update_collision_spheres(sim, robot, config, sphere_ids)
+                        time.sleep(0.016)  # ~60 fps
+
+                    time.sleep(0.5)  # Pause between motions
+
+                # Use goal as next start
+                start = goal
+                successful_plans += 1
+
+            else:
+                print(f'  ❌ Failed to solve')
+
+        except Exception as e:
+            print(f'  ❌ ERROR: {e}')
+            import traceback
+            traceback.print_exc()
+
+    print(f'\n{"="*70}')
+    print(f'Completed {successful_plans}/{num_plans} successful plans')
+
+    if sim is not None:
+        print('Keeping window open for 5 seconds...')
+        time.sleep(5)
+
+    if successful_plans > 0:
+        print("\n✅ TEST 7 PASSED: RRTC works with random configs and playback")
+        return True
+    else:
+        print("\n❌ TEST 7 FAILED: No successful plans")
+        return False
+
+
 def main(
     skip_aorrtc_segfault_test: bool = False,
-    only_test: str = None
+    only_test: str = None,
+    num_plans: int = 3
 ):
     """
     Run comprehensive tests to diagnose bimanualpanda70180 segfault.
 
     Args:
         skip_aorrtc_segfault_test: Skip the test that causes segfault
-        only_test: Run only a specific test (1-6)
+        only_test: Run only a specific test (1-7)
+        num_plans: Number of plans to generate for test 7 (default: 3)
     """
     print("\n" + "="*70)
     print("COMPREHENSIVE SEGFAULT DIAGNOSIS FOR bimanualpanda70180")
@@ -263,6 +441,8 @@ def main(
             test_aorrtc_with_segfault_configs(start, goal)
         elif test_num == 6:
             test_aorrtc_with_random_configs()
+        elif test_num == 7:
+            test_rrtc_with_random_configs_and_playback(num_plans)
         return
 
     # Run all tests
@@ -275,6 +455,8 @@ def main(
     tests.append(("RRTC with Segfault Configs", test_rrtc_with_segfault_configs(start, goal)))
 
     tests.append(("AORRTC with Random Configs", test_aorrtc_with_random_configs()))
+
+    tests.append(("RRTC with Random Configs and Playback", test_rrtc_with_random_configs_and_playback(num_plans)))
 
     if not skip_aorrtc_segfault_test:
         print("\n" + "="*70)

@@ -6,7 +6,7 @@
         <origin xyz="-0.025566 -2.88e-05 0.057332" rpy="0 0 0" />
         <inertia ixx="0.00782229414331" ixy="-1.56191622996e-05" ixz="-0.00126005738123" iyy="0.0109027971813" iyz="1.08233858202e-05" izz="0.0102355503949" />
     </inertial>
-    <collision name="panda1::fr3_link0_sph_0">
+    <!-- <collision name="panda1::fr3_link0_sph_0">
         <geometry>
             <sphere radius="0.105" />
         </geometry>
@@ -17,7 +17,7 @@
             <sphere radius="0.105" />
         </geometry>
         <origin rpy="0 0 0" xyz="-0.068 0.000 0.000" />
-    </collision>
+    </collision> -->
 </link>
 
 <link name="panda1::panda_link1">
@@ -405,7 +405,7 @@
         <origin xyz="-0.025566 -2.88e-05 0.057332" rpy="0 0 0" />
         <inertia ixx="0.00782229414331" ixy="-1.56191622996e-05" ixz="-0.00126005738123" iyy="0.0109027971813" iyz="1.08233858202e-05" izz="0.0102355503949" />
     </inertial>
-    <collision name="panda2::fr3_link0_sph_0">
+    <!-- <collision name="panda2::fr3_link0_sph_0">
         <geometry>
             <sphere radius="0.105" />
         </geometry>
@@ -416,7 +416,7 @@
             <sphere radius="0.105" />
         </geometry>
         <origin rpy="0 0 0" xyz="-0.068 0.000 0.000" />
-    </collision>
+    </collision> -->
 </link>
 
 <link name="panda2::panda_link1">

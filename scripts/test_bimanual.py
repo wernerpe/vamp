@@ -54,11 +54,30 @@ def main(num_plans=5):
         visualize=True
     )
     print('PyBullet ready!')
-
+    import pickle
+    problem_dict_path =  'tmp/vamp_environment.pkl'
+    with open(problem_dict_path, 'rb') as f:
+        problem_dict = pickle.load(f)
     # Setup planning
-    rng = robot.halton()
-    env = vamp.Environment()
-    settings = vamp.AORRTCSettings()
+    rng = robot.xorshift()
+    ignore_names = []
+    for s in problem_dict["sphere"]:
+        if "link0" in s['name']:
+            ignore_names.append(s['name'])
+
+    sim.add_environment_from_problem_dict(problem_dict, ignore_names = ignore_names)
+    env = vamp.problem_dict_to_vamp(problem_dict, ignore_names = ignore_names)
+    settings = vamp.RRTCSettings()
+    settings.max_iterations = 1000000  # Increased from 100k for 14-DOF system
+    settings.max_samples = 10000000     # Increased from 100k for better exploration
+    settings.radius = 15.0              # Increased from 4.0 for larger connection radius
+    settings.range = 5.0                # Increased from 2.0 for larger step size
+    settings.alpha = 0.01                # Higher alpha for more goal-biased search
+    settings.balance = True             # Balance tree growth
+    settings.dynamic_domain = True      # Use dynamic domain
+    settings.min_radius = 0.1           # Lower minimum radius to allow tighter connections
+    settings.tree_ratio = 0.5           # Balance between start and goal trees
+    settings.start_tree_first = True    # Start from start tree
     simp_settings = vamp.SimplifySettings()
 
     # Sample initial start
@@ -97,13 +116,14 @@ def main(num_plans=5):
         if goal is None:
             print(f'Motion {plan_num+1}: Failed to find valid goal, skipping')
             continue
-        assert robot.validate(start_segfault)
-        assert robot.validate(goal_segfault)
-        assert robot.validate(start)
-        assert robot.validate(goal)
+        
+        assert robot.validate(start_segfault, env)
+        assert robot.validate(goal_segfault, env)
+        assert robot.validate(start, env)
+        assert robot.validate(goal, env)
         
         # Plan
-        result = robot.aorrtc(start_segfault, goal_segfault, env, settings, rng)
+        result = robot.rrtc(start_segfault, goal_segfault, env, settings, rng)
 
         if result.solved:
             # Simplify

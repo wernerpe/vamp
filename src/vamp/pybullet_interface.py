@@ -278,34 +278,37 @@ class PyBulletSimulator:
 
             self.client.changeVisualShape(terrain, -1, rgbaColor = [1, 1, 1, 1])
 
-    def add_environment_from_problem_dict(self, problem: Dict[str, Any], add_names: bool = True):
+    def add_environment_from_problem_dict(self, problem: Dict[str, Any], add_names: bool = True, ignore_names = []):
         with DisableRendering(self.client), RedirectStream(sys.stdout), RedirectStream(sys.stderr):
             for obj in problem['sphere']:
-                self.add_sphere(
-                    obj['radius'],
-                    obj['position'],
-                    obj['name'] if add_names and 'name' in obj else None,
-                    obj['name'],
-                    )
+                if obj['name'] not in ignore_names:
+                    self.add_sphere(
+                        obj['radius'],
+                        obj['position'],
+                        obj['name'] if add_names and 'name' in obj else None,
+                        obj['name'],
+                        )
 
             for obj in problem['cylinder']:
-                self.add_capsule(
-                    obj['radius'],
-                    obj['length'],
-                    obj['position'],
-                    obj['orientation_quat_xyzw'],
-                    obj['name'] if add_names and 'name' in obj else None,
-                    obj['name'],
-                    )
+                if obj['name'] not in ignore_names:
+                    self.add_capsule(
+                        obj['radius'],
+                        obj['length'],
+                        obj['position'],
+                        obj['orientation_quat_xyzw'],
+                        obj['name'] if add_names and 'name' in obj else None,
+                        obj['name'],
+                        )
 
             for obj in problem['box']:
-                self.add_cuboid(
-                    obj['half_extents'],
-                    obj['position'],
-                    obj['orientation_quat_xyzw'],
-                    obj['name'] if add_names and 'name' in obj else None,
-                    obj['name'],
-                    )
+                if obj['name'] not in ignore_names:
+                    self.add_cuboid(
+                        obj['half_extents'],
+                        obj['position'],
+                        obj['orientation_quat_xyzw'],
+                        obj['name'] if add_names and 'name' in obj else None,
+                        obj['name'],
+                        )
 
     def draw_roadmap(self, fk_function, roadmap):
         with DisableRendering(self.client), RedirectStream(sys.stdout), RedirectStream(sys.stderr):
