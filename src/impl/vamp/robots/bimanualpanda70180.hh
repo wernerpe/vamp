@@ -15,7 +15,7 @@ struct BimanualPanda70180
     static constexpr std::size_t n_spheres = 104;
     static constexpr float min_radius = 0.02199999988079071;
     static constexpr float max_radius = 0.05999999865889549;
-    static constexpr std::size_t resolution = 32;
+    static constexpr std::size_t resolution = 64;
 
     static constexpr std::array<std::string_view, dimension> joint_names = {"panda1::panda_joint1", "panda1::panda_joint2", "panda1::panda_joint3", "panda1::panda_joint4", "panda1::panda_joint5", "panda1::panda_joint6", "panda1::panda_joint7", "panda2::panda_joint1", "panda2::panda_joint2", "panda2::panda_joint3", "panda2::panda_joint4", "panda2::panda_joint5", "panda2::panda_joint6", "panda2::panda_joint7"};
     static constexpr std::array<std::string_view, 2> end_effectors ={"panda_hand1::panda_hand", "panda_hand2::panda_hand"};
