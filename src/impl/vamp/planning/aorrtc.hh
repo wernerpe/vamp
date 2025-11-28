@@ -75,6 +75,13 @@ namespace vamp::planning
 
             std::cout << "[DEBUG] find_nearest: after nearestR, near_list.size()=" << near_list.size() << std::endl;
 
+            // If nearestR returned no neighbors, fall back to root
+            if (near_list.empty())
+            {
+                std::cout << "[DEBUG] find_nearest: near_list is EMPTY, returning root node" << std::endl;
+                return {root, c.distance(root.array)};
+            }
+
             const auto *new_nearest_node = &near_list[0];
             float new_nearest_distance = c.distance(new_nearest_node->array);
 
