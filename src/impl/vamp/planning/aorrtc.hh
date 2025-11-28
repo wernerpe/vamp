@@ -2,6 +2,7 @@
 
 #include <limits>
 #include <memory>
+#include <iostream>
 
 #include <vamp/collision/environment.hh>
 #include <vamp/planning/aox_nn.hh>
@@ -66,8 +67,13 @@ namespace vamp::planning
             // Almost always just pulls in the entire graph, but good to be principled.
             near_list.reserve(nn->size());
 
+            std::cout << "[DEBUG] find_nearest: nn->size()=" << nn->size()
+                      << ", near_list.capacity()=" << near_list.capacity() << std::endl;
+
             auto temp_node = NNNode{0, cost, c};
             nn->nearestR(temp_node, NNNode::distance(temp_node, root), near_list);
+
+            std::cout << "[DEBUG] find_nearest: after nearestR, near_list.size()=" << near_list.size() << std::endl;
 
             const auto *new_nearest_node = &near_list[0];
             float new_nearest_distance = c.distance(new_nearest_node->array);
@@ -80,6 +86,8 @@ namespace vamp::planning
                 new_nearest_node = &near_list[idx];
                 new_nearest_distance = c.distance(new_nearest_node->array);
             }
+
+            std::cout << "[DEBUG] find_nearest: returning node index=" << new_nearest_node->index << std::endl;
 
             return {*new_nearest_node, new_nearest_distance};
         }
@@ -373,12 +381,18 @@ namespace vamp::planning
             const AORRTCSettings &settings_in,
             typename RNG::Ptr rng) noexcept -> PlanningResult<Robot>
         {
+            std::cout << "\n[DEBUG META] ========== AORRTC Meta Algorithm Starting ==========" << std::endl;
+            std::cout << "[DEBUG META] Environment obstacles: " << environment.size() << std::endl;
+
             auto start_time = std::chrono::steady_clock::now();
 
             // Update the settings for internal searches
             AORRTCSettings settings = settings_in;  // make a mutable copy
             const std::size_t &max_samples = settings.max_samples;
             const std::size_t &max_iterations = settings.max_iterations;
+
+            std::cout << "[DEBUG META] max_samples=" << max_samples
+                      << ", max_iterations=" << max_iterations << std::endl;
 
             // Configure internal RRTC settings
             RRTCSettings &rrtc_settings = settings.rrtc;
@@ -389,12 +403,19 @@ namespace vamp::planning
             float best_path_cost = std::numeric_limits<float>::max();
             std::size_t iters = 0;
 
+            std::cout << "[DEBUG META] Finding initial solution with RRTC..." << std::endl;
+
             do
             {
                 // Find an initial solution
                 result = RRTC::solve(start, goals, environment, rrtc_settings, rng);
                 iters += result.iterations;
+                std::cout << "[DEBUG META] RRTC iteration, iters=" << iters
+                          << ", path_size=" << result.path.size() << std::endl;
             } while (result.path.empty() and iters < settings.max_iterations);
+
+            std::cout << "[DEBUG META] Initial RRTC complete. path_empty=" << result.path.empty()
+                      << ", iters=" << iters << std::endl;
 
             // Simplify solution if enabled
             if (settings.simplify_intermediate and not result.path.empty())
@@ -424,19 +445,34 @@ namespace vamp::planning
 
             auto phs_rng = std::make_shared<ProlateHyperspheroidRNG<Robot>>(phs, rng);
 
+            std::cout << "[DEBUG META] Creating AOX_RRTC instance with max_samples=" << max_samples << std::endl;
             AOX_RRTC instance(max_samples);
+            std::cout << "[DEBUG META] AOX_RRTC instance created successfully" << std::endl;
 
+            std::cout << "[DEBUG META] Entering optimization loop..." << std::endl;
+            std::cout << "[DEBUG META] best_path_cost=" << best_path_cost
+                      << ", best_possible_cost=" << best_possible_cost << std::endl;
+
+            std::size_t optimization_iter = 0;
             // If we get close to straight line, just call it.
             // Also handles numerical issues with PHS when too close to straight line...
             while (iters < max_iterations and (best_path_cost - best_possible_cost) > 1e-8)
             {
+                std::cout << "[DEBUG META] Optimization iteration " << optimization_iter++
+                          << ", iters=" << iters << "/" << max_iterations << std::endl;
+
                 // Update internal maximum iterations
                 rrtc_settings.max_iterations =
                     std::min(settings.max_iterations - iters, settings.max_internal_iterations);
 
+                std::cout << "[DEBUG META] anytime=" << settings.anytime
+                          << ", use_phs=" << settings.use_phs
+                          << ", cost_bound_resample=" << settings.cost_bound_resample << std::endl;
+
                 // By default, use AORRTC
                 if (not settings.anytime)
                 {
+                    std::cout << "[DEBUG META] Calling AOX_RRTC instance.solve()..." << std::endl;
                     // If there is a single goal, sample with PHS
                     if (settings.use_phs and goals.size() == 1)
                     {
@@ -446,10 +482,12 @@ namespace vamp::planning
                     {
                         result = instance.solve(start, goals, environment, settings, best_path_cost, rng);
                     }
+                    std::cout << "[DEBUG META] AOX_RRTC instance.solve() returned" << std::endl;
                 }
                 // If anytime, use Anytime RRTC
                 else
                 {
+                    std::cout << "[DEBUG META] Calling RRTC::solve()..." << std::endl;
                     if (settings.use_phs and goals.size() == 1)
                     {
                         result = RRTC::solve(start, goals, environment, rrtc_settings, phs_rng);
@@ -458,9 +496,11 @@ namespace vamp::planning
                     {
                         result = RRTC::solve(start, goals, environment, rrtc_settings, rng);
                     }
+                    std::cout << "[DEBUG META] RRTC::solve() returned" << std::endl;
                 }
 
                 iters += result.iterations;
+                std::cout << "[DEBUG META] After solve, result.path.size()=" << result.path.size() << std::endl;
 
                 // If last search found a solution
                 if (not result.path.empty())
