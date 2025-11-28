@@ -382,7 +382,6 @@ namespace vamp::planning
             typename RNG::Ptr rng) noexcept -> PlanningResult<Robot>
         {
             std::cout << "\n[DEBUG META] ========== AORRTC Meta Algorithm Starting ==========" << std::endl;
-            std::cout << "[DEBUG META] Environment obstacles: " << environment.size() << std::endl;
 
             auto start_time = std::chrono::steady_clock::now();
 
